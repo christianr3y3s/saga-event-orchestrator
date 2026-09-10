@@ -1,0 +1,13 @@
+# Tópicos do domínio cashback -- um por linha, linhas com # são ignoradas.
+# Uso: ./scripts/create-topics.sh domains/cashback/topics.txt
+
+payments.transaction.created
+transactions.validated
+cashback.calculate
+cashback.applied
+
+# tópicos internos do motor (compartilhados, mas incluídos aqui pra facilitar o setup
+# de um ambiente rodando só este domínio)
+_orchestrator.dlq
+_orchestrator.retry
+_orchestrator.state

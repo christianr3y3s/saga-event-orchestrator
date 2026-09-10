@@ -1,0 +1,10 @@
+{
+  "editor.formatOnSave": true,
+  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.cargo.runBuildScripts": true,
+  "rust-analyzer.inlayHints.enable": true,
+  "rust-analyzer.lens.enable": true,
+  "files.watcherExclude": {
+    "**/target/**": true
+  }
+}

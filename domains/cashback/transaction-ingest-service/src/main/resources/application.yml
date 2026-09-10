@@ -1,0 +1,39 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: transaction-ingest-service
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: transaction-ingest-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      # commit manual, na mesma filosofia do orquestrador Rust: só avança o offset
+      # depois que a transação está garantida (outbox no Redis já escrito).
+      ack-mode: manual_immediate
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+# ============================
+# Tópicos: precisam bater com orchestrator.properties do lado do orquestrador
+# (event.in.TransactionValidated.topic=transactions.validated)
+# ============================
+app:
+  kafka:
+    in-topic: payments.transaction.created
+    out-topic: transactions.validated
+  redis:
+    idempotency-ttl-seconds: 86400
+  outbox:
+    reconcile-fixed-delay-ms: 5000
