@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:loja_inventory_test;DB_CLOSE_DELAY=-1
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  h2:
+    console:
+      enabled: false
+
+app:
+  kafka:
+    in-topic-reservar: loja.estoque.reservar.test
+    in-topic-liberar: loja.estoque.liberar.test
+    out-topic-reservado: loja.estoque.reservado.test
+    out-topic-indisponivel: loja.estoque.indisponivel.test
+    out-topic-liberado: loja.estoque.liberado.test

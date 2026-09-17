@@ -6,6 +6,13 @@ transactions.validated
 cashback.calculate
 cashback.applied
 
+# saga.completed/saga.failed: orchestrator.cashback.properties já declara
+# command.out.SagaCompleted/SagaFailed apontando pra estes tópicos, mas faltavam aqui --
+# sem isso, o cp-kafka os cria via auto-criação com config default (1 partição/replicação
+# em vez das 3 partições que create-topics.sh usa pros demais), gerando inconsistência.
+saga.completed
+saga.failed
+
 # tópicos internos do motor (compartilhados, mas incluídos aqui pra facilitar o setup
 # de um ambiente rodando só este domínio)
 _orchestrator.dlq

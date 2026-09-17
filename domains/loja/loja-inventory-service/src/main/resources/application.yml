@@ -1,0 +1,60 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: loja-inventory-service
+
+  # H2 em memória para o primeiro round de testes -- ao trocar para Postgres/MySQL de
+  # verdade, só isto muda (url/driver/username/password), nada no código.
+  datasource:
+    url: jdbc:h2:mem:loja_inventory;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # ok para H2/protótipo; numa migração real, trocar por Flyway/Liquibase
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  h2:
+    console:
+      enabled: true       # http://localhost:8084/h2-console -- só para inspecionar em dev
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: loja-inventory-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      ack-mode: manual_immediate
+
+# ============================
+# Tópicos: precisam bater com orchestrator.loja.properties
+#   in-topic-reservar     == command.out.ReservarEstoque.topic
+#   in-topic-liberar      == command.out.LiberarEstoque.topic
+#   out-topic-reservado   == event.in.EstoqueReservado.topic
+#   out-topic-indisponivel== event.in.EstoqueIndisponivel.topic
+#   out-topic-liberado    == event.in.EstoqueLiberado.topic
+# ============================
+app:
+  kafka:
+    in-topic-reservar: loja.estoque.reservar
+    in-topic-liberar: loja.estoque.liberar
+    out-topic-reservado: loja.estoque.reservado
+    out-topic-indisponivel: loja.estoque.indisponivel
+    out-topic-liberado: loja.estoque.liberado
+  outbox:
+    publish-fixed-delay-ms: 5000
+    batch-size: 50
