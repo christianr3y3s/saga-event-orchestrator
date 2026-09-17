@@ -35,7 +35,7 @@
             <artifactId>spring-kafka</artifactId>
         </dependency>
 
-        <!-- H2 primeiro (em memória) -- trocar por postgresql/mysql-connector-j quando sair do modo de testes -->
+        <!-- H2 primeiro (em memória) trocar por postgresql/mysql-connector-j quando sair do modo de testes -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>

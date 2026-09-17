@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="cashback-service" />
+        <module name="transaction-ingest-service" />
+        <module name="cashback-outbox-jpa" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="cashback-outbox-jpa" options="-parameters" />
+      <module name="cashback-service" options="-parameters" />
+      <module name="transaction-ingest-service" options="-parameters" />
+    </option>
+  </component>
+</project>
