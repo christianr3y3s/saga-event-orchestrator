@@ -1,0 +1,54 @@
+# ============================
+# Exemplo autocontido pra rodar o motor sozinho, sem nenhum domínio real (cashback/nfe).
+# É base.properties + a saga de demonstração OrderSaga na mesma arquivo, só pra facilitar
+# `cargo run` local sem precisar combinar arquivos. NÃO é usado por nenhum domínio real.
+# ============================
+
+kafka.bootstrap.servers=localhost:9092
+kafka.group.id=saga-orchestrator-demo
+kafka.auto.offset.reset=earliest
+kafka.enable.auto.commit=true
+
+kafka.dlq.topic=_orchestrator.dlq
+kafka.retry.topic=_orchestrator.retry
+kafka.state.topic=_orchestrator.state
+
+event.type.source=payload
+event.type.path=$.type
+correlation.source=payload
+correlation.path=$.correlationId
+saga.step.timeout.ms=30000
+
+# ============================
+# OrderSaga (demo genérica -- nenhum serviço real implementa os consumers dela)
+# ============================
+event.in.OrderCreated.topic=orders.created
+event.in.PaymentReserved.topic=payments.reserved
+event.in.InventoryConfirmed.topic=inventory.confirmed
+event.in.InventoryFailed.topic=inventory.failed
+event.in.PaymentRolledBack.topic=payments.rolledback
+
+command.out.ReservePayment.topic=payments.reserve
+command.out.ConfirmInventory.topic=inventory.confirm
+command.out.RollbackPayment.topic=payments.rollback
+command.out.SagaCompleted.topic=saga.completed
+command.out.SagaFailed.topic=saga.failed
+
+route.OrderCreated.emit=ReservePayment,ConfirmInventory
+route.InventoryFailed.emit=RollbackPayment
+route.InventoryConfirmed.emit=SagaCompleted
+route.PaymentRolledBack.emit=SagaFailed
+
+saga.OrderSaga.start=START
+saga.OrderSaga.end=Completed,Failed
+saga.OrderSaga.states=START,InProgress,Compensating,Completed,Failed
+saga.OrderSaga.state.START.on.OrderCreated=InProgress
+saga.OrderSaga.state.InProgress.on.InventoryConfirmed=Completed
+saga.OrderSaga.state.InProgress.on.InventoryFailed=Compensating
+saga.OrderSaga.state.Compensating.on.PaymentRolledBack=Failed
+
+#error.on.parse=DLQ
+#error.on.missing.correlation=DLQ
+#error.on.missing.event.type=DLQ
+#error.on.unknown.event=IGNORE
+#error.on.publish.fail=RETRY

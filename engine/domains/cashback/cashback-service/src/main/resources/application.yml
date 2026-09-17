@@ -1,0 +1,37 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: cashback-service
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: cashback-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      ack-mode: manual_immediate
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+# ============================
+# Tópicos: in-topic precisa bater com command.out.CalculateCashback.topic do
+# orchestrator.properties; out-topic precisa bater com event.in.CashbackApplied.topic
+# ============================
+app:
+  kafka:
+    in-topic: cashback.calculate
+    out-topic: cashback.applied
+  cashback:
+    percentage: 0.01   # 1% do valor da transação; ajuste conforme a regra de negócio
+  outbox:
+    reconcile-fixed-delay-ms: 5000

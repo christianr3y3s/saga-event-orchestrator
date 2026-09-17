@@ -1,0 +1,25 @@
+# Tópicos do domínio loja -- um por linha, linhas com # são ignoradas.
+# Uso: ./scripts/create-topics.sh domains/loja/topics.txt
+
+loja.pedido.criado
+loja.estoque.reservar
+loja.estoque.reservado
+loja.estoque.indisponivel
+loja.pagamento.processar
+loja.pagamento.aprovado
+loja.pagamento.recusado
+loja.estoque.liberar
+loja.estoque.liberado
+loja.pedido.expedir
+
+# saga.completed/saga.failed são compartilhados entre domínios -- incluídos aqui
+# porque orchestrator.loja.properties os referencia (o topics.txt do cashback tinha
+# esse mesmo gap, corrigido junto com este).
+saga.completed
+saga.failed
+
+# tópicos internos do motor (compartilhados, mas incluídos aqui pra facilitar o setup
+# de um ambiente rodando só este domínio)
+_orchestrator.dlq
+_orchestrator.retry
+_orchestrator.state

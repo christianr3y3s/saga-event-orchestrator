@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.lab.saga</groupId>
+    <artifactId>loja-inventory-service</artifactId>
+    <version>0.1.0</version>
+    <name>loja-inventory-service</name>
+    <description>Reserva/libera estoque de forma transacional (JPA + outbox), mesmo padrão comprovado em cashback-outbox-jpa.</description>
+
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-json</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
+        <!-- H2 primeiro (em memória) trocar por postgresql/mysql-connector-j quando sair do modo de testes -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Log estruturado em JSON (veja logback-spring.xml e docs/observability/README.md)
+             -- é o que permite o Promtail extrair level/domain/service/correlationId como
+             campos, em vez de precisar fazer regex sobre uma linha de texto solta. -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>7.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <!-- Mesma convenção do cashback-outbox-jpa: "mvn test" roda só os
+                     testes Mockito rápidos por padrão. O teste @Tag("integration")
+                     (sobe Spring + H2) roda com: mvn test -DexcludedGroups= -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <excludedGroups>integration</excludedGroups>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
