@@ -1,5 +1,10 @@
 # Domínio: NF-e
 
+> **Decisão de produto (2026-09-19):** NF-e/SEFAZ e contabilidade ficam como "extra" --
+> `logistica-rota-service` (rota + frete) é o case levado ao mercado de cargas primeiro.
+> Este domínio continua existindo e o que já está construído (resolução de endpoint SEFAZ)
+> não é descartado, só não é o caminho crítico até o motor de rota/frete provar valor.
+
 Ver a seção "Sobre o domínio NF-e" em `docs/adding-a-domain.md` para o roadmap completo
 (Event Store → Saga → Read Model → Cache Projection → Cliente Quarkus → Resilience) e por
 que a integração com a SEFAZ deve ficar isolada num serviço próprio. Este diretório

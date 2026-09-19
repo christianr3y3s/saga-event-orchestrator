@@ -1,5 +1,12 @@
 # Domínio: Logística
 
+> **Decisão de produto (2026-09-19):** `logistica-rota-service` v1.0.0 é o case de
+> apresentação ao mercado de cargas -- rota + frete, hospedado e com interface, é o que se
+> mostra primeiro. NF-e/SEFAZ (`domains/nfe`) e qualquer integração contábil ficam como
+> "extra": construídos até onde já estão (resolução de endpoint SEFAZ), mas fora do caminho
+> crítico até o motor de rota/frete provar valor com empresas reais. Ver "Em aberto" abaixo
+> para o que falta antes de tratar os números de rota como confiáveis puros.
+
 Ver `DESIGN.md` neste mesmo diretório para o raciocínio completo por trás das escolhas
 abaixo -- em especial a separação entre "motor de otimização de rota" (implementado aqui)
 e "ciclo de vida da entrega" (ainda não implementado, é saga-shaped e ficaria em cima do
