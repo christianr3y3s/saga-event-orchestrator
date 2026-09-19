@@ -1,0 +1,9 @@
+# Logs locais redirecionados pra cá quando rodando serviços fora de container (veja
+# docs/observability/README.md) -- não devem ser versionados.
+logs/*.log
+
+# Build artifacts
+target/
+*.class
+
+.idea/

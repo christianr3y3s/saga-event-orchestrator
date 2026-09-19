@@ -9,7 +9,9 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+# "json" habilita saída estruturada (tracing_subscriber::fmt().json()) -- necessário
+# pra exportar pra Loki/Datadog sem depender de regex sobre texto solto.
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 
 tokio = { version = "1", features = ["full"] }
 

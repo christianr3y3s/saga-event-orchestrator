@@ -2,6 +2,7 @@ use std::{collections::HashMap, fs, path::Path};
 
 #[derive(Debug, Clone)]
 pub struct OrchestratorConfig {
+    pub domain_name: String,
     pub kafka: KafkaConfig,
     pub conventions: Conventions,
     pub event_in: Vec<EventIn>,
@@ -65,6 +66,14 @@ pub fn load_properties(path: impl AsRef<Path>) -> anyhow::Result<HashMap<String,
 pub fn load_config(path: impl AsRef<Path>) -> anyhow::Result<OrchestratorConfig> {
     let p = load_properties(path)?;
 
+    // Usado só pra observabilidade: rotula todo log emitido por este processo com o
+    // domínio que ele está rodando (ex.: "cashback", "loja"). Precisa vir do properties
+    // porque scripts/run-domain.sh combina base.properties + o do domínio num arquivo
+    // temporário (mktemp) -- o NOME do arquivo não carrega o domínio, então não dá pra
+    // derivar isso do path do ORCH_CONFIG. Cada domains/<nome>/orchestrator.<nome>.properties
+    // deve declarar `domain.name=<nome>` (veja docs/adding-a-domain.md).
+    let domain_name = p.get("domain.name").cloned().unwrap_or_else(|| "unknown".into());
+
     let kafka = KafkaConfig {
         bootstrap_servers: get(&p, "kafka.bootstrap.servers")?,
         group_id: get(&p, "kafka.group.id")?,
@@ -123,7 +132,7 @@ pub fn load_config(path: impl AsRef<Path>) -> anyhow::Result<OrchestratorConfig>
         on_publish_fail: p.get("error.on.publish.fail").cloned().unwrap_or_else(|| "RETRY".into()),
     };
 
-    Ok(OrchestratorConfig { kafka, conventions, event_in, command_out, routes, error_policy })
+    Ok(OrchestratorConfig { domain_name, kafka, conventions, event_in, command_out, routes, error_policy })
 }
 
 fn get(map: &HashMap<String, String>, key: &str) -> anyhow::Result<String> {

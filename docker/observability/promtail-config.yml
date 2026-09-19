@@ -1,0 +1,59 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+# Lê arquivos de log de dentro de ./logs (bind-mount, veja docker-compose.dev.yml) --
+# não escaneia containers Docker porque, hoje, os serviços de aplicação (orquestrador
+# Rust, serviços Java) rodam localmente via `cargo run`/`mvn spring-boot:run`, não como
+# containers (veja docs/observability/README.md pra como redirecionar a saída deles
+# pra cá, respeitando a convenção de nome de arquivo usada abaixo). Se/quando esses
+# serviços forem dockerizados, trocar por docker_sd_configs.
+#
+# Dois jobs porque o formato JSON de saída difere entre as duas stacks: o
+# tracing_subscriber (Rust) aninha os campos do span atual em "span.*"; o
+# logstash-logback-encoder (Java) grava "domain"/"service" na raiz do objeto JSON.
+# Cada job casa só com o padrão de nome de arquivo da sua stack -- veja a convenção de
+# nomes em docs/observability/README.md (orchestrator-<domínio>.log vs <serviço>.log).
+scrape_configs:
+  - job_name: orchestrator-logs
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: saga-orchestrator
+          __path__: /var/log/app/orchestrator-*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            domain: span.domain
+            service: span.service
+            message: message
+      - labels:
+          level:
+          domain:
+          service:
+
+  - job_name: java-service-logs
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: saga-java-services
+          __path__: /var/log/app/*-service.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            domain: domain
+            service: service
+            correlation_id: correlationId
+            message: message
+      - labels:
+          level:
+          domain:
+          service:

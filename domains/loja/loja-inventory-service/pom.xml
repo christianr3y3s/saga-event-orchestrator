@@ -42,6 +42,15 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Log estruturado em JSON (veja logback-spring.xml e docs/observability/README.md):
+             é o que permite o Promtail extrair level/domain/service/correlationId como
+             campos, em vez de precisar fazer regex sobre uma linha de texto solta. -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>7.4</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

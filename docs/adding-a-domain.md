@@ -7,6 +7,10 @@ implementam os consumers dos eventos declarados.
 ## Passo a passo
 
 1. **Crie `domains/<nome>/orchestrator.<nome>.properties`** com:
+   - `domain.name=<nome>` — rotula todo log deste processo (veja
+     `docs/observability/README.md`). Sem isso, o campo `domain` no log fica
+     `"unknown"`, e não dá pra filtrar por domínio num backend de log externo quando
+     várias instâncias do mesmo binário rodam ao mesmo tempo.
    - `event.in.<Evento>.topic=...` para cada evento que o motor vai consumir
    - `command.out.<Comando>.topic=...` para cada comando que o motor vai publicar
    - `route.<Evento>.emit=<Comando1>,<Comando2>` para o roteamento
