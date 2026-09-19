@@ -1,0 +1,18 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: logistica-rota-service
+
+# ============================
+# Motor de otimização de rota (domains/logistica/DESIGN.md, camada 1-3). Serviço
+# síncrono, sem Kafka/saga -- não tem orchestrator.logistica.properties nem topics.txt
+# de propósito (ver README deste domínio).
+# ============================
+app:
+  rota:
+    # Fator de "sinuosidade" aplicado à distância em linha reta (HaversineProvedorDistancias).
+    # 1.0 = linha reta pura. Referência grosseira até trocar por OpenRouteService/GraphHopper
+    # com perfil de veículo pesado (ver comparação em DESIGN.md).
+    fator-rodoviario: 1.3
