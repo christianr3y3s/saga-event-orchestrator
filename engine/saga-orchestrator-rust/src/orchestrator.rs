@@ -137,7 +137,7 @@ impl Orchestrator {
         }
     }
 
-    async fn handle_message(&mut self, msg: &rdkafka::message::BorrowedMessage<'_>) -> Result<()> {
+    async fn handle_message(&self, msg: &rdkafka::message::BorrowedMessage<'_>) -> Result<()> {
         let topic = msg.topic().to_string();
         let payload = msg.payload_view::<str>().unwrap_or(Ok(""))?;
 
@@ -306,7 +306,7 @@ impl Orchestrator {
                     "raw": raw,
                     "ts": now_ms()
                 }).to_string();
-                let record = FutureRecord::to(&self.cfg.kafka.dlq_topic).payload(&payload);
+                let record = FutureRecord::<(), String>::to(&self.cfg.kafka.dlq_topic).payload(&payload);
                 let _ = self.producer.send(record, Duration::from_secs(5)).await;
                 warn!(%kind, %topic, "sent to DLQ");
             }

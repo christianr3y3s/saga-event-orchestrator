@@ -14,7 +14,7 @@ while IFS= read -r topic; do
   [ -z "$topic" ] && continue
   case "$topic" in \#*) continue ;; esac
 
-  docker exec -i kafka kafka-topics --bootstrap-server "$BOOTSTRAP" \
+  docker exec kafka kafka-topics --bootstrap-server "$BOOTSTRAP" \
     --create --if-not-exists --topic "$topic" --partitions 3 --replication-factor 1
 done < "$TOPICS_FILE"
 
