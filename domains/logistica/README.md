@@ -68,10 +68,17 @@ componentes marcados):
 - `Consumo` -- limite de 2,5 km/L. Deliberadamente só se aplica a um consumo **medido**,
   nunca ao nominal da tabela (o nominal do rodotrem carregado é 2,15 km/L -- aplicar o
   corte a ele dispararia sempre, o que foi um bug do protótipo original).
-- `ProvedorDistancias` (interface) + `HaversineProvedorDistancias` (`@Component`) --
-  implementação de referência em linha reta × fator de sinuosidade configurável
-  (`app.rota.fator-rodoviario`, default 1.3). **Não é rota rodoviária real** -- ver "Em
-  aberto".
+- `ProvedorDistancias` (interface) + duas implementações, escolhidas por
+  `app.rota.distancia-provider` sem mudar código (DIP):
+  - `HaversineProvedorDistancias` (default) -- linha reta × fator de sinuosidade
+    configurável (`app.rota.fator-rodoviario`, default 1.3). Rápida, sem chave, **não é
+    rota rodoviária real**.
+  - `OpenRouteServiceProvedorDistancias` (`distancia-provider=openrouteservice`) --
+    distância rodoviária real via Matrix API da OpenRouteService, perfil `driving-hgv`
+    (caminhão pesado). Exige `app.rota.ors.api-key` (grátis em
+    openrouteservice.org/dev/#/signup). **É a que deve estar ativa antes de qualquer
+    demonstração para o mercado** -- ver "Em aberto" sobre o que ainda falta mesmo com
+    ela ligada.
 - `SolverRota` (interface) + `VizinhoMaisProximoComDoisOpt` (`@Component`) -- vizinho mais
   próximo + 2-opt. Antes desta rodada de revisão, o solver era uma classe estática
   (`TspSolver`) chamada diretamente por `SimuladorRota`: a Javadoc dizia "plugável", mas
@@ -101,7 +108,11 @@ componentes marcados):
   (inclusive a conferência com a tabela validada), `Consumo`, `HaversineProvedorDistancias`,
   `VizinhoMaisProximoComDoisOpt` e `SimuladorRota` (inclusive um teste com um `SolverRota`
   falso, provando que trocar de algoritmo é só trocar o que é passado no construtor, sem
-  mexer em `SimuladorRota` -- a prova concreta da correção DIP desta rodada). `CalculadoraFreteTest` roda os mesmos três casos de
+  mexer em `SimuladorRota` -- a prova concreta da correção DIP desta rodada).
+  `OpenRouteServiceProvedorDistanciasTest` cobre só a lógica pura (montar o corpo da
+  requisição com longitude/latitude invertidas, interpretar a resposta, rejeitar célula
+  nula "sem rota" em vez de silenciar como zero) -- sem rede, sem mockar `RestTemplate`.
+  `CalculadoraFreteTest` roda os mesmos três casos de
   aceitação (A: carreta 4 eixos carregada, B: carreta 30 t vazia, C: rodotrem carregado)
   já usados na página web de frete e no protótipo Android -- os três lados (Kotlin, HTML/JS
   e este serviço Java) precisam concordar; se mudar uma fórmula aqui, mude nos outros dois
@@ -136,10 +147,14 @@ curl -s localhost:8085/fretes/calcular -H 'Content-Type: application/json' -d '{
 > **Build não verificado neste ambiente**: o acesso ao Maven Central (`repo.maven.apache.org`)
 > está bloqueado pela política de rede desta sessão (proxy retornou 403), então `mvn test`
 > não pôde ser executado aqui. A lógica de domínio (tabela de consumo, haversine, TSP,
-> cálculo de frete com os três casos de aceitação) foi conferida à parte com `javac`/`java`
-> puro, sem Spring nem JUnit -- todos os valores bateram. A camada Spring (controller,
-> `@Component`, testes de integração) não foi compilada nem executada. Rode `mvn test` no
-> seu ambiente antes de considerar isto pronto para produção.
+> cálculo de frete com os três casos de aceitação, e a montagem/interpretação de
+> requisição-resposta da OpenRouteService) foi conferida à parte com `javac`/`java` puro --
+> a parte da ORS pôde ser testada contra o Jackson de verdade (jars já presentes nesta
+> máquina via Gradle), não só simulada; todos os valores bateram. A camada Spring
+> (controller, `@Component`, a chamada HTTP em si de `OpenRouteServiceProvedorDistancias`,
+> testes de integração) não foi compilada nem executada. Rode `mvn test` no seu ambiente, e
+> faça pelo menos uma chamada real com `distancia-provider=openrouteservice` contra uma
+> rota conhecida, antes de considerar isto pronto para uma demonstração.
 
 ## Revisão de fronteiras (Clean Code / SOLID) desta rodada
 
@@ -177,11 +192,15 @@ reais continuam sem resposta -- o que foi construído agora é só a peça 1 (mo
 otimização), com dados de referência/simulados, exatamente a opção "default caso não haja
 objeção" que o `DESIGN.md` já apontava. Antes de ir para produção com carga real:
 
-1. **API de roteirização real.** `HaversineProvedorDistancias` é linha reta × fator fixo --
-   não sabe de restrição de peso/altura, posto de pesagem ou praça de pedágio. Trocar por
-   uma implementação de `ProvedorDistancias` sobre OpenRouteService (perfil `driving-hgv`)
-   ou GraphHopper (perfil de caminhão) antes de usar em decisão real de rota de carga
-   pesada -- a interface já isola essa troca do resto do código.
+1. **API de roteirização real (implementada, precisa ser ativada e testada).**
+   `OpenRouteServiceProvedorDistancias` já existe -- falta: (a) gerar a chave grátis em
+   openrouteservice.org/dev/#/signup, (b) configurar `APP_ROTA_DISTANCIA_PROVIDER=openrouteservice`
+   e `APP_ROTA_ORS_API_KEY=<chave>` no host (variáveis de ambiente na Railway, por exemplo
+   -- não editar `application.yml` com a chave real), e (c) testar contra uma rota conhecida
+   (ex.: Santos-Belém) antes de qualquer demonstração, porque a chamada HTTP em si não foi
+   exercitada nesta sessão (ver ressalva de build acima). O plano B (GraphHopper) continua
+   disponível se a ORS não servir -- é só escrever outra implementação de `ProvedorDistancias`
+   e trocar a mesma variável de ambiente, sem editar `SimuladorRota`.
 2. **TSP vs. rota-com-restrições.** Isto resolve "em que ordem visitar N pontos". Para o
    caso do asfalto Santos-Belém (ou qualquer rota longa com restrição de peso/jornada), o
    problema real é outro (shortest path com restrições) -- ver a seção correspondente em
