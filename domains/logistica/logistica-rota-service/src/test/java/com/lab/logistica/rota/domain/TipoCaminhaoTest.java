@@ -51,4 +51,14 @@ class TipoCaminhaoTest {
     void rejeitaCargaNegativa() {
         assertThrows(IllegalArgumentException.class, () -> TipoCaminhao.RODOTREM.consumoKmL(-1.0));
     }
+
+    @Test
+    void rejeitaCargaNaN() {
+        assertThrows(IllegalArgumentException.class, () -> TipoCaminhao.RODOTREM.consumoKmL(Double.NaN));
+    }
+
+    @Test
+    void expoeNomeDeExibicao() {
+        assertEquals("Carreta 4 Eixos", TipoCaminhao.CARRETA_4_EIXOS.nomeExibicao());
+    }
 }

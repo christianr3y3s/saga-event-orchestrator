@@ -22,4 +22,12 @@ class CoordenadaTest {
     void rejeitaLongitudeInvalida() {
         assertThrows(IllegalArgumentException.class, () -> new Coordenada(0.0, -180.1));
     }
+
+    @Test
+    void rejeitaLimitesForaNosDoisSentidosENaN() {
+        assertThrows(IllegalArgumentException.class, () -> new Coordenada(-90.1, 0.0));
+        assertThrows(IllegalArgumentException.class, () -> new Coordenada(Double.NaN, 0.0));
+        assertThrows(IllegalArgumentException.class, () -> new Coordenada(0.0, 180.1));
+        assertThrows(IllegalArgumentException.class, () -> new Coordenada(0.0, Double.NaN));
+    }
 }

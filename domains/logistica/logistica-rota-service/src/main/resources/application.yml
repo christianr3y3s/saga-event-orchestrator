@@ -25,12 +25,18 @@ app:
     # usado só quando distancia-provider=haversine). 1.0 = linha reta pura.
     fator-rodoviario: 1.3
 
+    # Teto de pontos por /rotas/simular (matriz NxN + 2-opt). 50 = limite da Matrix API grátis da ORS.
+    max-pontos: 50
+
     ors:
       # Chave da OpenRouteService (grátis em openrouteservice.org/dev/#/signup, ~2000
       # requisições/dia no plano free). Deixe em branco se distancia-provider=haversine.
       # Sobrescreva por APP_ROTA_ORS_API_KEY -- nunca coloque a chave real neste arquivo.
       api-key: ""
       base-url: https://api.openrouteservice.org
+      # Sem timeout uma ORS travada seguraria a thread da requisição indefinidamente.
+      connect-timeout-ms: 3000
+      read-timeout-ms: 10000
       # driving-hgv = caminhão pesado (heavy goods vehicle); evita vias com restrição de
       # altura/peso quando a ORS tiver esse dado para a via. Ver DESIGN.md.
       perfil: driving-hgv
@@ -39,3 +45,14 @@ app:
     # em outro domínio). "*" é só para o primeiro teste de aceitação -- troque pelo domínio
     # real antes de produção (pode ser sobrescrito por APP_CORS_ALLOWED_ORIGINS, sem redeploy).
     allowed-origins: "*"
+
+# Health check para o orquestrador de deploy (só health/info expostos; nada de env/beans).
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true

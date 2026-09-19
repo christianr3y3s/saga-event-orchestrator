@@ -1,9 +1,11 @@
 package com.lab.logistica.rota.domain;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -38,21 +40,37 @@ public class OpenRouteServiceProvedorDistancias implements ProvedorDistancias {
     private final String baseUrl;
     private final String perfil;
 
+    @Autowired
     public OpenRouteServiceProvedorDistancias(
             RestTemplateBuilder restTemplateBuilder,
             @Value("${app.rota.ors.api-key:}") String apiKey,
             @Value("${app.rota.ors.base-url:https://api.openrouteservice.org}") String baseUrl,
-            @Value("${app.rota.ors.perfil:driving-hgv}") String perfil) {
+            @Value("${app.rota.ors.perfil:driving-hgv}") String perfil,
+            @Value("${app.rota.ors.connect-timeout-ms:3000}") long connectTimeoutMs,
+            @Value("${app.rota.ors.read-timeout-ms:10000}") long readTimeoutMs) {
+        this(criarRestTemplate(restTemplateBuilder, connectTimeoutMs, readTimeoutMs), apiKey, baseUrl, perfil);
+    }
+
+    /** Construtor com o {@link RestTemplate} já pronto -- usado pelos testes (MockRestServiceServer). */
+    OpenRouteServiceProvedorDistancias(RestTemplate restTemplate, String apiKey, String baseUrl, String perfil) {
         if (apiKey == null || apiKey.isBlank()) {
             throw new IllegalStateException(
                     "app.rota.distancia-provider=openrouteservice exige app.rota.ors.api-key "
                             + "(variável de ambiente APP_ROTA_ORS_API_KEY) -- crie uma chave grátis em "
                             + "openrouteservice.org/dev/#/signup antes de subir com este provedor.");
         }
-        this.restTemplate = restTemplateBuilder.build();
+        this.restTemplate = restTemplate;
         this.apiKey = apiKey;
         this.baseUrl = baseUrl.replaceAll("/+$", "");
         this.perfil = perfil;
+    }
+
+    /** Sem timeout, uma ORS travada seguraria a thread da requisição para sempre. */
+    private static RestTemplate criarRestTemplate(RestTemplateBuilder builder, long connectMs, long readMs) {
+        return builder
+                .setConnectTimeout(Duration.ofMillis(connectMs))
+                .setReadTimeout(Duration.ofMillis(readMs))
+                .build();
     }
 
     @Override
@@ -71,7 +89,7 @@ public class OpenRouteServiceProvedorDistancias implements ProvedorDistancias {
             var resposta = restTemplate.postForEntity(url, new HttpEntity<>(corpo, headers), String.class);
             return extrairMatrizKm(resposta.getBody(), mapper, n);
         } catch (RestClientException e) {
-            throw new IllegalStateException(
+            throw new ProvedorDistanciasIndisponivelException(
                     "Falha ao consultar a OpenRouteService (" + url + "): " + e.getMessage(), e);
         }
     }
@@ -109,23 +127,23 @@ public class OpenRouteServiceProvedorDistancias implements ProvedorDistancias {
         try {
             json = mapper.readValue(corpoResposta, Map.class);
         } catch (Exception e) {
-            throw new IllegalStateException("Resposta da OpenRouteService não é um JSON válido: " + corpoResposta, e);
+            throw new ProvedorDistanciasIndisponivelException("Resposta da OpenRouteService não é um JSON válido: " + corpoResposta, e);
         }
         Object distancesObj = json.get("distances");
         if (!(distancesObj instanceof List<?> linhas) || linhas.size() != n) {
-            throw new IllegalStateException(
+            throw new ProvedorDistanciasIndisponivelException(
                     "Resposta da OpenRouteService não tem o formato esperado (esperava distances " + n + "x" + n
                             + "): " + corpoResposta);
         }
         double[][] matriz = new double[n][n];
         for (int i = 0; i < n; i++) {
             if (!(linhas.get(i) instanceof List<?> linha) || linha.size() != n) {
-                throw new IllegalStateException("Linha " + i + " da matriz da OpenRouteService não tem " + n + " colunas");
+                throw new ProvedorDistanciasIndisponivelException("Linha " + i + " da matriz da OpenRouteService não tem " + n + " colunas");
             }
             for (int j = 0; j < n; j++) {
                 Object valor = linha.get(j);
                 if (valor == null) {
-                    throw new IllegalStateException(
+                    throw new ProvedorDistanciasIndisponivelException(
                             "OpenRouteService não achou rota entre os pontos " + i + " e " + j
                                     + " (fora de alcance do perfil driving-hgv, ou ponto isolado da malha viária)");
                 }

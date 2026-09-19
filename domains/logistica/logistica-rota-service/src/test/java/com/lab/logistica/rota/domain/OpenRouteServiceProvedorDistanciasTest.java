@@ -73,4 +73,21 @@ class OpenRouteServiceProvedorDistanciasTest {
         assertThrows(IllegalStateException.class,
                 () -> OpenRouteServiceProvedorDistancias.extrairMatrizKm("isto não é json", mapper, 2));
     }
+
+    @Test
+    void rejeitaLinhaQueNaoEhLista() {
+        assertThrows(IllegalStateException.class,
+                () -> OpenRouteServiceProvedorDistancias.extrairMatrizKm("{\"distances\":[1,2]}", mapper, 2));
+    }
+
+    @Test
+    void falhaAoSerializarCorpoViraErroExplicito() throws Exception {
+        ObjectMapper quebrado = org.mockito.Mockito.mock(ObjectMapper.class);
+        org.mockito.Mockito.when(quebrado.writeValueAsString(org.mockito.ArgumentMatchers.any()))
+                .thenThrow(new com.fasterxml.jackson.core.JsonProcessingException("boom") { });
+
+        var ex = assertThrows(IllegalStateException.class,
+                () -> OpenRouteServiceProvedorDistancias.montarCorpoRequisicao(pontos, quebrado));
+        assertTrue(ex.getMessage().contains("montar a requisição"));
+    }
 }

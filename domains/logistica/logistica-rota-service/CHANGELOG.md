@@ -6,6 +6,38 @@ isso a versão de estreia é `1.0.0` em vez de `0.x` -- os outros módulos do do
 (`logistica-importacao-service`, `nfe/sefaz-integration`) continuam em `0.1.0` por ainda
 não serem expostos publicamente.
 
+## [1.0.1] -- 2026-09-19
+
+Endurecimento para produção (revisão + cobertura + prontidão das integrações). Sem mudança
+de contrato dos endpoints existentes, exceto os novos códigos de erro abaixo.
+
+### Adicionado
+- **Gate de cobertura**: `mvn verify` falha abaixo de 95% de linhas e de branches (JaCoCo).
+  Estado atual: 100% / 100% (92 testes; só a classe com `main()` fica fora da conta).
+- `GET /actuator/health` (com probes de liveness/readiness) para o orquestrador de deploy;
+  somente `health` e `info` são expostos.
+- Teto de pontos por `/rotas/simular` (`app.rota.max-pontos`, default 50 = limite da Matrix
+  API grátis da ORS) -- sem ele um request grande esgotava CPU/memória (matriz NxN + 2-opt).
+- Timeouts de conexão (3 s) e leitura (10 s) na chamada à ORS
+  (`app.rota.ors.connect-timeout-ms` / `read-timeout-ms`).
+- Testes da chamada HTTP à ORS (URL, cabeçalho de autenticação, corpo, 4xx/5xx, resposta
+  malformada) e da troca de provedor por configuração no contexto Spring.
+
+### Corrigido
+- Falha da ORS (fora do ar, 401, resposta sem rota) virava **500 genérico**; agora é **502**
+  com mensagem que não vaza URL/corpo de resposta.
+- `caminhao` ou `pontos` ausentes (ou com item nulo) em `/rotas/simular` viravam NPE/500;
+  agora são **400** com a mensagem do campo.
+- ORS sem `app.rota.ors.api-key` continua falhando na **inicialização** (não no 1º request) --
+  agora coberto por teste.
+
+### Verificação
+- Build e testes agora rodam de verdade com Maven (o aviso de "não verificado" da 1.0.0
+  deixa de valer).
+- **Ainda não verificado**: chamada contra a OpenRouteService REAL (exige chave; ver README,
+  "Homologação da ORS"). Sem autenticação nos endpoints e CORS default `*` continuam como na
+  1.0.0 -- ver "Antes de expor publicamente".
+
 ## [1.0.0] -- 2026-09-19
 
 ### Adicionado

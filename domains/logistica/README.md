@@ -156,6 +156,26 @@ curl -s localhost:8085/fretes/calcular -H 'Content-Type: application/json' -d '{
 > faça pelo menos uma chamada real com `distancia-provider=openrouteservice` contra uma
 > rota conhecida, antes de considerar isto pronto para uma demonstração.
 
+## Produção: `logistica-rota-service` 1.0.1
+
+### Homologação da ORS (única coisa que os testes automatizados NÃO cobrem)
+Os testes simulam a OpenRouteService (MockRestServiceServer); nenhum roda contra a API real,
+porque isso exige chave e cota. Antes de ligar em produção, uma vez, com uma chave real:
+```bash
+APP_ROTA_DISTANCIA_PROVIDER=openrouteservice APP_ROTA_ORS_API_KEY=<sua-chave> \
+  java -jar logistica-rota-service/target/logistica-rota-service-1.0.1.jar
+curl -s localhost:8085/rotas/simular -H 'content-type: application/json' -d \
+ '{"caminhao":"CARRETA_30T","cargaToneladas":20,"pontos":[{"lat":-23.96,"lng":-46.33},{"lat":-1.45,"lng":-48.49}]}'
+```
+Confira que a distância devolvida é rodoviária (Santos->Belém na casa de milhares de km,
+bem acima da linha reta) e que uma chave inválida devolve 502, não 500.
+
+### Antes de expor publicamente
+- `APP_CORS_ALLOWED_ORIGINS`: trocar o default `*` pelo domínio real da interface.
+- Endpoints sem autenticação: colocar atrás de gateway/API key se ficarem públicos.
+- `APP_ROTA_ORS_API_KEY`: sempre por variável de ambiente/secret, nunca no `application.yml`.
+- Health check para o deploy: `GET /actuator/health` (readiness: `/actuator/health/readiness`).
+
 ## Revisão de fronteiras (Clean Code / SOLID) desta rodada
 
 Auditoria mecânica (grep de dependências entre pacotes + verificação de tamanho de classe)

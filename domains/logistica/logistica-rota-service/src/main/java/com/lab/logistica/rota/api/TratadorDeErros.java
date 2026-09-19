@@ -1,5 +1,6 @@
 package com.lab.logistica.rota.api;
 
+import com.lab.logistica.rota.domain.ProvedorDistanciasIndisponivelException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -23,5 +24,12 @@ public class TratadorDeErros {
     public ResponseEntity<ErroResposta> tratarCorpoInvalido(HttpMessageNotReadableException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErroResposta("Corpo da requisição inválido ou incompleto"));
+    }
+
+    /** Falha do provedor externo de distância: 502, sem vazar o corpo/stack da resposta de lá. */
+    @ExceptionHandler(ProvedorDistanciasIndisponivelException.class)
+    public ResponseEntity<ErroResposta> tratarProvedorIndisponivel(ProvedorDistanciasIndisponivelException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(new ErroResposta("Serviço de distância rodoviária indisponível no momento; tente novamente"));
     }
 }

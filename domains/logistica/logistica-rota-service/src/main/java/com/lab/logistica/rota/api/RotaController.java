@@ -4,6 +4,7 @@ import com.lab.logistica.rota.api.dto.CoordenadaDto;
 import com.lab.logistica.rota.api.dto.SimularRotaRequest;
 import com.lab.logistica.rota.api.dto.SimularRotaResponse;
 import com.lab.logistica.rota.domain.SimuladorRota;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,13 +24,30 @@ import org.springframework.web.bind.annotation.RestController;
 public class RotaController {
 
     private final SimuladorRota simuladorRota;
+    private final int maxPontos;
 
-    public RotaController(SimuladorRota simuladorRota) {
+    /**
+     * {@code app.rota.max-pontos}: a matriz é NxN e o 2-opt é polinomial -- sem teto, um único
+     * request grande esgota CPU/memória. O default (50) também é o limite de locations da
+     * Matrix API gratuita da ORS.
+     */
+    public RotaController(SimuladorRota simuladorRota, @Value("${app.rota.max-pontos:50}") int maxPontos) {
         this.simuladorRota = simuladorRota;
+        this.maxPontos = maxPontos;
     }
 
     @PostMapping("/rotas/simular")
     public SimularRotaResponse simularRota(@RequestBody SimularRotaRequest request) {
+        if (request.caminhao() == null) {
+            throw new IllegalArgumentException("caminhao é obrigatório");
+        }
+        if (request.pontos() == null || request.pontos().stream().anyMatch(java.util.Objects::isNull)) {
+            throw new IllegalArgumentException("pontos é obrigatório e não pode conter itens nulos");
+        }
+        if (request.pontos().size() > maxPontos) {
+            throw new IllegalArgumentException(
+                    "Máximo de " + maxPontos + " pontos por requisição (recebidos " + request.pontos().size() + ")");
+        }
         var pontos = request.pontos().stream().map(CoordenadaDto::paraDominio).toList();
         var resultado = simuladorRota.simular(pontos, request.caminhao(), request.cargaToneladas());
         return SimularRotaResponse.deDominio(resultado);
