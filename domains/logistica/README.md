@@ -65,7 +65,12 @@ componentes marcados):
   implementação de referência em linha reta × fator de sinuosidade configurável
   (`app.rota.fator-rodoviario`, default 1.3). **Não é rota rodoviária real** -- ver "Em
   aberto".
-- `TspSolver` -- vizinho mais próximo + 2-opt, plugável.
+- `SolverRota` (interface) + `VizinhoMaisProximoComDoisOpt` (`@Component`) -- vizinho mais
+  próximo + 2-opt. Antes desta rodada de revisão, o solver era uma classe estática
+  (`TspSolver`) chamada diretamente por `SimuladorRota`: a Javadoc dizia "plugável", mas
+  trocar de algoritmo exigia editar `SimuladorRota`. Extrair a interface fecha essa lacuna
+  entre DIP e a implementação -- agora é o mesmo padrão de injeção já usado em
+  `ProvedorDistancias`.
 - `SimuladorRota` (`@Component`) -- orquestra as três camadas acima.
 - `ParametrosFrete` / `ResultadoFrete` / `CalculadoraFrete` (`@Component`) -- frete =
   combustível + operacional + pedágios + margem (markup sobre o custo, não sobre o preço
@@ -73,10 +78,13 @@ componentes marcados):
   cada linha. Sem impostos.
 
 **API** (`com.lab.logistica.rota.api`):
-- `POST /rotas/simular` -- `{ caminhao, cargaToneladas, pontos: [{lat,lng}, ...] }` →
-  ordem de visita (circuito fechado), distância, consumo, litros.
-- `POST /fretes/calcular` -- `{ caminhao, cargaToneladas, distanciaKm, precoDieselPorLitro,
-  pedagios, custoOperacionalPorKm, margemPercentual, pisoMinimo? }` → composição do frete.
+- `RotaController` -- `POST /rotas/simular` -- `{ caminhao, cargaToneladas,
+  pontos: [{lat,lng}, ...] }` → ordem de visita (circuito fechado), distância, consumo,
+  litros.
+- `FreteController` -- `POST /fretes/calcular` -- `{ caminhao, cargaToneladas, distanciaKm,
+  precoDieselPorLitro, pedagios, custoOperacionalPorKm, margemPercentual, pisoMinimo? }` →
+  composição do frete. Separado de `RotaController` por SRP (revisão desta rodada) -- um
+  único controller respondia pelos dois endpoints antes, misturando duas razões de mudança.
 - Entrada inválida (carga acima da capacidade, distância ≤ 0, coordenada fora de faixa,
   etc.) responde `400` com `{ "mensagem": "..." }` em vez de vazar erro 500.
 
@@ -84,7 +92,9 @@ componentes marcados):
 
 - **Unitários** (`src/test/.../domain`): cobrem `Coordenada`, `GeoUtils`, `TipoCaminhao`
   (inclusive a conferência com a tabela validada), `Consumo`, `HaversineProvedorDistancias`,
-  `TspSolver` e `SimuladorRota`. `CalculadoraFreteTest` roda os mesmos três casos de
+  `VizinhoMaisProximoComDoisOpt` e `SimuladorRota` (inclusive um teste com um `SolverRota`
+  falso, provando que trocar de algoritmo é só trocar o que é passado no construtor, sem
+  mexer em `SimuladorRota` -- a prova concreta da correção DIP desta rodada). `CalculadoraFreteTest` roda os mesmos três casos de
   aceitação (A: carreta 4 eixos carregada, B: carreta 30 t vazia, C: rodotrem carregado)
   já usados na página web de frete e no protótipo Android -- os três lados (Kotlin, HTML/JS
   e este serviço Java) precisam concordar; se mudar uma fórmula aqui, mude nos outros dois
@@ -123,6 +133,35 @@ curl -s localhost:8085/fretes/calcular -H 'Content-Type: application/json' -d '{
 > puro, sem Spring nem JUnit -- todos os valores bateram. A camada Spring (controller,
 > `@Component`, testes de integração) não foi compilada nem executada. Rode `mvn test` no
 > seu ambiente antes de considerar isto pronto para produção.
+
+## Revisão de fronteiras (Clean Code / SOLID) desta rodada
+
+Auditoria mecânica (grep de dependências entre pacotes + verificação de tamanho de classe)
+sobre os três módulos deste domínio mais `nfe/sefaz-integration`, focada em
+`logistica-rota-service` por ser o "primeiro serviço público" (prioridade explícita desta
+rodada). Achados e correções:
+
+1. **DIP em `TspSolver` (corrigido)** -- a Javadoc dizia "plugável", mas o solver era só
+   métodos estáticos chamados diretamente por `SimuladorRota`; trocar de algoritmo exigia
+   editar `SimuladorRota`. Extraída a interface `SolverRota`, com `VizinhoMaisProximoComDoisOpt`
+   como implementação de referência, injetada por construtor do mesmo jeito que
+   `ProvedorDistancias` já era. `TspSolver` foi removido.
+2. **SRP em `RotaController` (corrigido)** -- um único controller respondia por
+   `/rotas/simular` e `/fretes/calcular`, duas responsabilidades sem relação direta. Split
+   em `RotaController` (só rotas) e `FreteController` (só frete).
+3. **Duplicação em `ParametrosFrete` (corrigido)** -- quatro blocos quase idênticos de
+   validação "não pode ser negativo" no construtor compacto, extraídos para um método
+   privado `exigirNaoNegativo`.
+4. **Dependency Rule invertida em `logistica-importacao-service` (corrigido)** -- ver
+   `logistica-importacao-service/README.md`, seção "Revisão de fronteiras": o domínio
+   importava e devolvia tipos de `api.dto` diretamente.
+5. **`nfe/sefaz-integration` (sem violações)** -- biblioteca pequena e coesa, sem
+   dependência de framework; nada a corrigir.
+6. **`@Entity` no pacote `dominio` (aceito, não é violação nesta convenção)** --
+   `EntregaHistorico` mistura anotação JPA com lógica de domínio. Isto é academicamente
+   discutível, mas é a mesma convenção já usada em `cashback-outbox-jpa` e
+   `loja-inventory-service` -- mudar só aqui criaria inconsistência com o resto do
+   repositório sem que ninguém tivesse pedido isso.
 
 ## Em aberto (não decidido nesta rodada)
 

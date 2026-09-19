@@ -1,8 +1,5 @@
 package com.lab.logistica.importacao.dominio;
 
-import com.lab.logistica.importacao.api.dto.AlertaConsumo;
-import com.lab.logistica.importacao.api.dto.ImportacaoResumo;
-import com.lab.logistica.importacao.api.dto.LinhaRejeitada;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -41,7 +38,7 @@ public class PlanilhaImportService {
     }
 
     @Transactional
-    public ImportacaoResumo importar(String nomeArquivo, InputStream conteudo) throws IOException {
+    public ResumoImportacao importar(String nomeArquivo, InputStream conteudo) throws IOException {
         try (Workbook workbook = WorkbookFactory.create(conteudo)) {
             Sheet planilha = workbook.getSheetAt(0);
             Row cabecalho = planilha.getRow(planilha.getFirstRowNum());
@@ -57,8 +54,8 @@ public class PlanilhaImportService {
             }
 
             List<EntregaHistorico> validas = new ArrayList<>();
-            List<LinhaRejeitada> erros = new ArrayList<>();
-            List<AlertaConsumo> alertas = new ArrayList<>();
+            List<LinhaRejeitadaImportacao> erros = new ArrayList<>();
+            List<AlertaConsumoMedido> alertas = new ArrayList<>();
             int totalLinhas = 0;
             Instant agora = Instant.now();
 
@@ -74,16 +71,16 @@ public class PlanilhaImportService {
                     EntregaHistorico entrega = lerLinha(linha, colunas, nomeArquivo, numeroDeExibicao, agora);
                     validas.add(entrega);
                     if (entrega.getConsumoKmL() != null && entrega.getConsumoKmL() < Consumo.LIMITE_MIN_KM_L) {
-                        alertas.add(new AlertaConsumo(numeroDeExibicao, entrega.getCaminhao(), entrega.getConsumoKmL()));
+                        alertas.add(new AlertaConsumoMedido(numeroDeExibicao, entrega.getCaminhao(), entrega.getConsumoKmL()));
                     }
                 } catch (IllegalArgumentException e) {
-                    erros.add(new LinhaRejeitada(numeroDeExibicao, e.getMessage()));
+                    erros.add(new LinhaRejeitadaImportacao(numeroDeExibicao, e.getMessage()));
                 }
             }
 
             repository.saveAll(validas);
 
-            return new ImportacaoResumo(nomeArquivo, totalLinhas, validas.size(), erros.size(), erros, alertas);
+            return new ResumoImportacao(nomeArquivo, totalLinhas, validas.size(), erros.size(), erros, alertas);
         }
     }
 

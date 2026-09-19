@@ -31,7 +31,7 @@ public class HistoricoController {
      */
     @GetMapping("/historico/consumo-medio")
     public ConsumoMedioResponse consumoMedio(@RequestParam String caminhao, @RequestParam double cargaToneladas) {
-        return historicoConsumoService.consumoMedio(caminhao, cargaToneladas);
+        return ConsumoMedioResponse.deDominio(historicoConsumoService.consumoMedio(caminhao, cargaToneladas));
     }
 
     /** Todo o histórico importado, como JSON -- sem paginação ainda; ver README. */

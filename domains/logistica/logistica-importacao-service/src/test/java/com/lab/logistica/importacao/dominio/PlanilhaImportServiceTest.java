@@ -8,7 +8,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.lab.logistica.importacao.api.dto.ImportacaoResumo;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -34,7 +33,7 @@ class PlanilhaImportServiceTest {
                 List.of("2026-03-16", "RODOTREM", "48", "1000", "", "6,00", "3,00", "350,00", "", "PA", "SP")
         ));
 
-        ImportacaoResumo resumo = service.importar("entregas.xlsx", planilha);
+        ResumoImportacao resumo = service.importar("entregas.xlsx", planilha);
 
         assertEquals(2, resumo.totalLinhas());
         assertEquals(2, resumo.importadas());
@@ -60,7 +59,7 @@ class PlanilhaImportServiceTest {
                 List.of("2026-03-15", "RODOTREM", "48", "500", "1,8", "", "", "", "", "", "")
         ));
 
-        ImportacaoResumo resumo = service.importar("entregas.xlsx", planilha);
+        ResumoImportacao resumo = service.importar("entregas.xlsx", planilha);
 
         assertEquals(1, resumo.alertasConsumo().size());
         assertEquals(1.8, resumo.alertasConsumo().get(0).consumoKmL());
@@ -76,7 +75,7 @@ class PlanilhaImportServiceTest {
                 List.of("2026-03-16", "RODOTREM", "48", "1000", "", "", "", "", "", "", "")
         ));
 
-        ImportacaoResumo resumo = service.importar("entregas.xlsx", planilha);
+        ResumoImportacao resumo = service.importar("entregas.xlsx", planilha);
 
         assertEquals(2, resumo.totalLinhas());
         assertEquals(1, resumo.importadas());
@@ -93,7 +92,7 @@ class PlanilhaImportServiceTest {
                 List.of("2026-03-15", "RODOTREM", "", "500", "", "", "", "", "", "", "")
         ));
 
-        ImportacaoResumo resumo = service.importar("entregas.xlsx", planilha);
+        ResumoImportacao resumo = service.importar("entregas.xlsx", planilha);
 
         assertEquals(1, resumo.rejeitadas());
         assertTrue(resumo.erros().get(0).motivo().contains("carga_toneladas"));

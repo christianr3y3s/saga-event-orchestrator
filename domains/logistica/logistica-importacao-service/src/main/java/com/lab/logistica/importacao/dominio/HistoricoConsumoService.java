@@ -1,6 +1,5 @@
 package com.lab.logistica.importacao.dominio;
 
-import com.lab.logistica.importacao.api.dto.ConsumoMedioResponse;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +23,7 @@ public class HistoricoConsumoService {
         this.repository = repository;
     }
 
-    public ConsumoMedioResponse consumoMedio(String caminhaoBruto, double cargaToneladas) {
+    public ConsumoMedio consumoMedio(String caminhaoBruto, double cargaToneladas) {
         String caminhao = caminhaoBruto.trim().toUpperCase().replace(' ', '_');
         if (!ModelosCaminhaoConhecidos.ehValido(caminhao)) {
             throw new IllegalArgumentException("caminhao desconhecido: \"" + caminhaoBruto
@@ -39,10 +38,10 @@ public class HistoricoConsumoService {
 
         if (amostras.isEmpty()) {
             double nominal = ModelosCaminhaoConhecidos.consumoNominalKmL(caminhao, cargaToneladas);
-            return new ConsumoMedioResponse(caminhao, cargaToneladas, nominal, 0, "tabela_nominal");
+            return new ConsumoMedio(caminhao, cargaToneladas, nominal, 0, FonteConsumo.TABELA_NOMINAL);
         }
 
         double media = amostras.stream().mapToDouble(Double::doubleValue).average().orElseThrow();
-        return new ConsumoMedioResponse(caminhao, cargaToneladas, media, amostras.size(), "historico");
+        return new ConsumoMedio(caminhao, cargaToneladas, media, amostras.size(), FonteConsumo.HISTORICO);
     }
 }

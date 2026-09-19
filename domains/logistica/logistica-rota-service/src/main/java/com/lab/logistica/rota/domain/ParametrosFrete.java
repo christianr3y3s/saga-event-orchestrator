@@ -27,21 +27,22 @@ public record ParametrosFrete(
         if (precoDieselPorLitro == null || precoDieselPorLitro.signum() <= 0) {
             throw new IllegalArgumentException("O preço do diesel deve ser maior que zero");
         }
-        pedagios = pedagios == null ? BigDecimal.ZERO : pedagios;
-        custoOperacionalPorKm = custoOperacionalPorKm == null ? BigDecimal.ZERO : custoOperacionalPorKm;
-        margemPercentual = margemPercentual == null ? BigDecimal.ZERO : margemPercentual;
-        if (pedagios.signum() < 0) {
-            throw new IllegalArgumentException("Pedágios não podem ser negativos");
+        pedagios = exigirNaoNegativo(pedagios == null ? BigDecimal.ZERO : pedagios, "Pedágios");
+        custoOperacionalPorKm = exigirNaoNegativo(
+                custoOperacionalPorKm == null ? BigDecimal.ZERO : custoOperacionalPorKm, "O custo operacional");
+        margemPercentual = exigirNaoNegativo(
+                margemPercentual == null ? BigDecimal.ZERO : margemPercentual, "A margem");
+        if (pisoMinimo != null) {
+            exigirNaoNegativo(pisoMinimo, "O piso");
         }
-        if (custoOperacionalPorKm.signum() < 0) {
-            throw new IllegalArgumentException("O custo operacional não pode ser negativo");
+    }
+
+    /** Valida que {@code valor} não é negativo; devolve o próprio valor para uso em cadeia. */
+    private static BigDecimal exigirNaoNegativo(BigDecimal valor, String nomeParaMensagem) {
+        if (valor.signum() < 0) {
+            throw new IllegalArgumentException(nomeParaMensagem + " não pode ser negativo(a)");
         }
-        if (margemPercentual.signum() < 0) {
-            throw new IllegalArgumentException("A margem não pode ser negativa");
-        }
-        if (pisoMinimo != null && pisoMinimo.signum() < 0) {
-            throw new IllegalArgumentException("O piso não pode ser negativo");
-        }
+        return valor;
     }
 
     /** Construtor de conveniência sem piso mínimo. */

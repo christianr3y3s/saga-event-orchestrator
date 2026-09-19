@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.Random;
 import org.junit.jupiter.api.Test;
 
-class TspSolverTest {
+class VizinhoMaisProximoComDoisOptTest {
+
+    private final SolverRota solver = new VizinhoMaisProximoComDoisOpt();
 
     // 0=(0,0) 1=(1,1) 2=(1,0) 3=(0,1); a ordem 0,1,2,3 cruza as diagonais do quadrado.
     private final double[][] quadrado = {
@@ -20,44 +22,44 @@ class TspSolverTest {
 
     @Test
     void matrizVaziaGeraRotaVazia() {
-        assertEquals(List.of(), TspSolver.resolver(new double[0][0]));
+        assertEquals(List.of(), solver.resolver(new double[0][0]));
     }
 
     @Test
     void umPontoGeraRotaComApenasOrigem() {
-        assertEquals(List.of(0), TspSolver.resolver(new double[][]{{0.0}}));
+        assertEquals(List.of(0), solver.resolver(new double[][]{{0.0}}));
     }
 
     @Test
     void doisPontosIdaEVolta() {
         double[][] m = {{0.0, 5.0}, {5.0, 0.0}};
-        assertEquals(List.of(0, 1, 0), TspSolver.resolver(m));
+        assertEquals(List.of(0, 1, 0), solver.resolver(m));
     }
 
     @Test
     void rejeitaMatrizNaoQuadrada() {
         double[][] m = {{0.0, 1.0}, {1.0}};
-        assertThrows(IllegalArgumentException.class, () -> TspSolver.resolver(m));
+        assertThrows(IllegalArgumentException.class, () -> solver.resolver(m));
     }
 
     @Test
     void doisOptDesfazCruzamento() {
         List<Integer> cruzada = List.of(0, 1, 2, 3);
-        double custoAntes = TspSolver.custoFechado(quadrado, cruzada);
-        List<Integer> melhorada = TspSolver.doisOpt(quadrado, cruzada);
-        assertTrue(TspSolver.custoFechado(quadrado, melhorada) < custoAntes);
-        assertEquals(4.0, TspSolver.custoFechado(quadrado, melhorada), 1e-9);
+        double custoAntes = VizinhoMaisProximoComDoisOpt.custoFechado(quadrado, cruzada);
+        List<Integer> melhorada = VizinhoMaisProximoComDoisOpt.doisOpt(quadrado, cruzada);
+        assertTrue(VizinhoMaisProximoComDoisOpt.custoFechado(quadrado, melhorada) < custoAntes);
+        assertEquals(4.0, VizinhoMaisProximoComDoisOpt.custoFechado(quadrado, melhorada), 1e-9);
     }
 
     @Test
     void doisOptMantemRotaJaOtima() {
         List<Integer> otima = List.of(0, 2, 1, 3);
-        assertEquals(otima, TspSolver.doisOpt(quadrado, otima));
+        assertEquals(otima, VizinhoMaisProximoComDoisOpt.doisOpt(quadrado, otima));
     }
 
     @Test
     void resolverNoQuadradoAcha4() {
-        List<Integer> rota = TspSolver.resolver(quadrado);
+        List<Integer> rota = solver.resolver(quadrado);
         double custo = 0.0;
         for (int i = 0; i + 1 < rota.size(); i++) {
             custo += quadrado[rota.get(i)][rota.get(i + 1)];
@@ -80,7 +82,7 @@ class TspSolverTest {
             }
         }
 
-        List<Integer> rota = TspSolver.resolver(m);
+        List<Integer> rota = solver.resolver(m);
 
         assertEquals(0, rota.get(0));
         assertEquals(0, rota.get(rota.size() - 1));
@@ -88,8 +90,8 @@ class TspSolverTest {
         java.util.Collections.sort(semRepeticao);
         assertEquals(List.of(0, 1, 2, 3, 4, 5, 6, 7), semRepeticao);
 
-        double custoFinal = TspSolver.custoFechado(m, rota.subList(0, rota.size() - 1));
-        double custoNN = TspSolver.custoFechado(m, TspSolver.vizinhoMaisProximo(m));
+        double custoFinal = VizinhoMaisProximoComDoisOpt.custoFechado(m, rota.subList(0, rota.size() - 1));
+        double custoNN = VizinhoMaisProximoComDoisOpt.custoFechado(m, VizinhoMaisProximoComDoisOpt.vizinhoMaisProximo(m));
         assertTrue(custoFinal <= custoNN + 1e-9);
     }
 
@@ -100,6 +102,6 @@ class TspSolverTest {
                 {10.0, 0.0, 1.0},
                 {1.0, 10.0, 0.0}
         };
-        assertEquals(List.of(0, 1, 2, 0), TspSolver.resolver(m));
+        assertEquals(List.of(0, 1, 2, 0), solver.resolver(m));
     }
 }

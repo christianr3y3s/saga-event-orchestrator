@@ -63,6 +63,25 @@ da planilha mais `arquivo_origem`, `linha_planilha` e `importado_em` para rastre
 antes de uma migração real, trocar por Flyway/Liquibase (mesma ressalva já registrada em
 `cashback-outbox-jpa`/`loja-inventory-service`).
 
+## Revisão de fronteiras (Clean Code / SOLID) desta rodada
+
+**Dependency Rule invertida (corrigido).** `PlanilhaImportService` e
+`HistoricoConsumoService` (pacote `dominio`) importavam e devolviam tipos de `api.dto`
+diretamente (`ImportacaoResumo`, `AlertaConsumo`, `LinhaRejeitada`, `ConsumoMedioResponse`)
+-- o domínio dependendo da camada de transporte, direção contrária à regra de dependência
+(camadas internas não conhecem as externas) e inconsistente com o padrão já correto em
+`logistica-rota-service` (onde o domínio devolve seus próprios tipos e os DTOs de API é que
+mapeiam de volta via `deDominio(...)`).
+
+Corrigido criando os equivalentes no pacote `dominio`: `ResumoImportacao`,
+`LinhaRejeitadaImportacao`, `AlertaConsumoMedido` e `ConsumoMedio` (mais o enum
+`FonteConsumo`, substituindo o `String` solto `"historico"`/`"tabela_nominal"` -- primitive
+obsession que deixava o valor livre para digitar errado). Os dois serviços agora devolvem só
+tipos do próprio domínio; `api.dto.ImportacaoResumo`, `AlertaConsumo`, `LinhaRejeitada` e
+`ConsumoMedioResponse` viraram wrappers finos com `deDominio(...)`, e os controllers chamam
+esse mapeamento antes de responder. O contrato HTTP não mudou -- `fonte` continua sendo
+`"historico"`/`"tabela_nominal"` como string no JSON; só a representação interna virou enum.
+
 ## Isolamento de `logistica-rota-service`
 
 Este serviço **duplica** um pedaço pequeno da tabela de modelos de caminhão
@@ -85,9 +104,11 @@ feita** -- hoje são dois serviços HTTP independentes. Ligar os dois é o próx
   BR/EN e data em vários formatos), `PlanilhaImportServiceTest` (parsing completo com
   planilha construída em memória via Apache POI, repositório mockado com Mockito --
   cobre linha em branco ignorada, alerta de consumo baixo, linha rejeitada sem travar as
-  demais, planilha sem coluna obrigatória), `HistoricoConsumoServiceTest` (fallback para
-  tabela nominal, média por bucket vazio/carregado) e `DatasetCsvExporterTest` (escaping
-  RFC 4180).
+  demais, planilha sem coluna obrigatória; agora contra os tipos de domínio
+  `ResumoImportacao`/`LinhaRejeitadaImportacao`/`AlertaConsumoMedido`),
+  `HistoricoConsumoServiceTest` (fallback para tabela nominal, média por bucket
+  vazio/carregado; agora contra `ConsumoMedio`/`FonteConsumo`) e `DatasetCsvExporterTest`
+  (escaping RFC 4180).
 - **Integração** (`ImportacaoIntegrationTest`, `@Tag("integration")`): sobe o contexto
   Spring completo, servidor HTTP real, e faz upload multipart de verdade para
   `/importacoes/planilhas`, depois lê de volta por `/historico` e `/historico/dataset.csv`

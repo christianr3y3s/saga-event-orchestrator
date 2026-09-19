@@ -27,6 +27,7 @@ public class ImportacaoController {
         if (arquivo.isEmpty()) {
             throw new IllegalArgumentException("Arquivo vazio");
         }
-        return importService.importar(arquivo.getOriginalFilename(), arquivo.getInputStream());
+        var resumo = importService.importar(arquivo.getOriginalFilename(), arquivo.getInputStream());
+        return ImportacaoResumo.deDominio(resumo);
     }
 }

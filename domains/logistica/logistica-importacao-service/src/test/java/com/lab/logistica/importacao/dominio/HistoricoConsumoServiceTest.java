@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.lab.logistica.importacao.api.dto.ConsumoMedioResponse;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -26,9 +25,9 @@ class HistoricoConsumoServiceTest {
     void semHistoricoUsaTabelaNominal() {
         when(repository.findByCaminhaoAndConsumoKmLIsNotNull("RODOTREM")).thenReturn(List.of());
 
-        ConsumoMedioResponse r = service.consumoMedio("rodotrem", 48.0);
+        ConsumoMedio r = service.consumoMedio("rodotrem", 48.0);
 
-        assertEquals("tabela_nominal", r.fonte());
+        assertEquals(FonteConsumo.TABELA_NOMINAL, r.fonte());
         assertEquals(0, r.amostras());
         assertEquals(2.15, r.consumoKmL(), 1e-9);
     }
@@ -41,9 +40,9 @@ class HistoricoConsumoServiceTest {
                 entrega(0.0, 2.9)   // vazio -- não deve entrar na média de "carregado"
         ));
 
-        ConsumoMedioResponse r = service.consumoMedio("RODOTREM", 40.0); // carga > 0 -> bucket "carregado"
+        ConsumoMedio r = service.consumoMedio("RODOTREM", 40.0); // carga > 0 -> bucket "carregado"
 
-        assertEquals("historico", r.fonte());
+        assertEquals(FonteConsumo.HISTORICO, r.fonte());
         assertEquals(2, r.amostras());
         assertEquals(2.1, r.consumoKmL(), 1e-9);
     }
@@ -55,7 +54,7 @@ class HistoricoConsumoServiceTest {
                 entrega(0.0, 2.9)
         ));
 
-        ConsumoMedioResponse r = service.consumoMedio("RODOTREM", 0.0);
+        ConsumoMedio r = service.consumoMedio("RODOTREM", 0.0);
 
         assertEquals(1, r.amostras());
         assertEquals(2.9, r.consumoKmL(), 1e-9);

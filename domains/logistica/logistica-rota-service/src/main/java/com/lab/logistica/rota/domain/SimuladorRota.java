@@ -13,9 +13,11 @@ import org.springframework.stereotype.Component;
 public class SimuladorRota {
 
     private final ProvedorDistancias provedor;
+    private final SolverRota solver;
 
-    public SimuladorRota(ProvedorDistancias provedor) {
+    public SimuladorRota(ProvedorDistancias provedor, SolverRota solver) {
         this.provedor = provedor;
+        this.solver = solver;
     }
 
     public ResultadoRota simular(List<Coordenada> pontos, TipoCaminhao caminhao, double cargaToneladas) {
@@ -23,7 +25,7 @@ public class SimuladorRota {
             throw new IllegalArgumentException("São necessários ao menos 2 pontos");
         }
         double[][] matriz = provedor.matrizKm(pontos);
-        List<Integer> ordemIndices = TspSolver.resolver(matriz);
+        List<Integer> ordemIndices = solver.resolver(matriz);
 
         double distancia = 0.0;
         for (int i = 0; i + 1 < ordemIndices.size(); i++) {

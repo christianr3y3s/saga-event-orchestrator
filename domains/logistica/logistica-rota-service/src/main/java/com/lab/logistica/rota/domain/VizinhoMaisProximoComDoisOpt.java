@@ -2,20 +2,21 @@ package com.lab.logistica.rota.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.stereotype.Component;
 
 /**
- * Camada de solver (DESIGN.md, camada 3): heurística de vizinho mais próximo seguida de
- * 2-opt. Adequada para o número de paradas de uma rota de entrega (dezenas, não milhares
- * de pontos); plugável -- trocar por outro solver não deveria exigir mudanças nas camadas
- * de distância ou de domínio de negócio.
+ * Implementação de referência de {@link SolverRota}: heurística de vizinho mais próximo
+ * seguida de 2-opt. Adequada para o número de paradas de uma rota de entrega (dezenas, não
+ * milhares de pontos). É um {@code @Component} para que trocar de algoritmo seja trocar o
+ * bean injetado em {@link SimuladorRota}, não editar o código de {@code SimuladorRota} --
+ * a mesma forma como {@link HaversineProvedorDistancias} é injetado como
+ * {@link ProvedorDistancias}.
  */
-public final class TspSolver {
+@Component
+public class VizinhoMaisProximoComDoisOpt implements SolverRota {
 
-    private TspSolver() {
-    }
-
-    /** Circuito fechado começando e terminando no índice 0. */
-    public static List<Integer> resolver(double[][] matriz) {
+    @Override
+    public List<Integer> resolver(double[][] matriz) {
         int n = matriz.length;
         for (double[] linha : matriz) {
             if (linha.length != n) {
