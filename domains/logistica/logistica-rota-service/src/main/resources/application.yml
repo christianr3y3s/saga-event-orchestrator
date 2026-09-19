@@ -1,5 +1,7 @@
 server:
-  port: 8083
+  # 8083 já é usado por cashback-outbox-jpa; 8085 evita colisão se os dois rodarem juntos
+  # (ver domains/logistica/logistica-importacao-service para o próximo, 8086).
+  port: 8085
 
 spring:
   application:

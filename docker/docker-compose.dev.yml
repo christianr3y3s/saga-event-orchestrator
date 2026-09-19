@@ -63,12 +63,34 @@ services:
     volumes:
       - mongo-data:/data/db
 
+  # Usado por domains/logistica/logistica-importacao-service para guardar as planilhas de
+  # entrega/custo importadas (histórico para calibrar consumo real e dataset para
+  # treinamento de IA). Nenhum outro domínio depende disso -- só sobe se for usar esse
+  # serviço.
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: logistica
+      POSTGRES_USER: logistica
+      POSTGRES_PASSWORD: logistica
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U logistica -d logistica"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
 volumes:
   zookeeper-data:
   zookeeper-log:
   kafka-data:
   redis-data:
   mongo-data:
+  postgres-data:
 
 # Infra única compartilhada por todos os domínios (cashback, nfe, o que vier depois).
 # Cada domínio só declara SEUS PRÓPRIOS tópicos (veja domains/<nome>/topics.txt e

@@ -37,11 +37,20 @@ Camadas de `DESIGN.md` cobertas: 1 (distância), 2 (matriz) e 3 (solver). A cama
 implementada -- ela só faz sentido depois que um caso de uso real a exigir (ver "Em
 aberto" abaixo).
 
-## Módulo
+## Módulos
+
+### `logistica-importacao-service`
+
+Recebe planilhas Excel de entregas/custos e grava no Postgres -- essa base serve tanto
+para calibrar o consumo nominal abaixo (consumo médio REAL por modelo, em vez do valor
+fixo da tabela) quanto como dataset para treinamento de IA. Ver
+`logistica-importacao-service/README.md` para o contrato de colunas, os endpoints e as
+limitações. **Ainda não está integrado** com `logistica-rota-service` (são dois serviços
+HTTP independentes hoje) -- ligar os dois é o próximo passo óbvio.
 
 ### `logistica-rota-service`
 
-Serviço Spring Boot (Java 17, Maven), porta `8083`.
+Serviço Spring Boot (Java 17, Maven), porta `8085`.
 
 **Domínio** (`com.lab.logistica.rota.domain`, sem dependência de Spring exceto os dois
 componentes marcados):
@@ -93,13 +102,13 @@ componentes marcados):
 ```bash
 cd domains/logistica/logistica-rota-service
 mvn test                              # unitários + integração
-mvn spring-boot:run                   # sobe em :8083
+mvn spring-boot:run                   # sobe em :8085
 ```
 
 Teste ponta a ponta manual (o "teste reproduzível" pedido em `docs/adding-a-domain.md`):
 
 ```bash
-curl -s localhost:8083/fretes/calcular -H 'Content-Type: application/json' -d '{
+curl -s localhost:8085/fretes/calcular -H 'Content-Type: application/json' -d '{
   "caminhao": "CARRETA_4_EIXOS", "cargaToneladas": 38, "distanciaKm": 500,
   "precoDieselPorLitro": 6.00, "pedagios": 120.00,
   "custoOperacionalPorKm": 2.50, "margemPercentual": 15

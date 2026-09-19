@@ -1,0 +1,34 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: logistica-importacao-service
+
+  # Postgres de verdade (não H2) -- ver docker/docker-compose.dev.yml (serviço "postgres").
+  # Ajuste usuário/senha/host via variável de ambiente em qualquer ambiente que não seja
+  # o compose local.
+  datasource:
+    url: jdbc:postgresql://localhost:5432/logistica
+    username: logistica
+    password: logistica
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # ok para protótipo; numa migração real, trocar por Flyway/Liquibase
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+# ============================
+# Sem Kafka/saga de propósito: é um serviço de ingestão + consulta síncrona, não um
+# participante da saga (mesma razão de logistica-rota-service não ter
+# orchestrator.logistica.properties).
+# ============================
