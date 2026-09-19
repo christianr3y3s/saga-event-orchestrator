@@ -13,7 +13,7 @@
 
     <groupId>com.lab.saga</groupId>
     <artifactId>logistica-rota-service</artifactId>
-    <version>0.1.0</version>
+    <version>1.0.0</version>
     <name>logistica-rota-service</name>
     <description>
         Motor de otimização de rota do domínio logística (peça 1 de domains/logistica/DESIGN.md):
