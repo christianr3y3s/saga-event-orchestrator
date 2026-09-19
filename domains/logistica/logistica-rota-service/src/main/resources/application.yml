@@ -18,3 +18,8 @@ app:
     # 1.0 = linha reta pura. Referência grosseira até trocar por OpenRouteService/GraphHopper
     # com perfil de veículo pesado (ver comparação em DESIGN.md).
     fator-rodoviario: 1.3
+  cors:
+    # Origens autorizadas a chamar /rotas/** e /fretes/** de fora (a interface web, hospedada
+    # em outro domínio). "*" é só para o primeiro teste de aceitação -- troque pelo domínio
+    # real antes de produção (pode ser sobrescrito por APP_CORS_ALLOWED_ORIGINS, sem redeploy).
+    allowed-origins: "*"
