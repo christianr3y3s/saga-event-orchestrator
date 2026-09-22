@@ -1,0 +1,9 @@
+{
+  "spec_dir": "spec",
+  "spec_files": ["**/*.spec.js", "**/*.spec.jsx"],
+  "helpers": ["helpers/babel-register.cjs", "helpers/jsdom-setup.js"],
+  "env": {
+    "stopSpecOnExpectationFailure": false,
+    "random": false
+  }
+}

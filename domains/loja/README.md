@@ -78,6 +78,37 @@ Isso importa para quem for implementar o `payment-service`: ao emitir
 o motor só encaminha o `data` do evento de entrada para o comando de saída, não faz
 lookup em nenhum banco.
 
+### API HTTP (somente leitura)
+
+`loja-inventory-service` ganhou `spring-boot-starter-web` só para expor uma consulta de
+estoque para o front-end React (`domains/loja/loja-inventory-web`, ver abaixo):
+
+```
+GET /estoque         -> lista todos os itens: [{ "sku": "SKU-A", "availableQuantity": 10 }, ...]
+GET /estoque/{sku}   -> um item, ou 404 se o SKU não existir
+```
+
+**Decisão deliberada: nada além de leitura.** `EstoqueController` não tem nenhum
+`@PostMapping`/`@PutMapping`. Reservar/liberar estoque continua exclusivamente via Kafka
+(`InventoryCommandListener`, dentro da saga) — expor isso por HTTP permitiria mudar o
+estoque por fora da saga, quebrando a garantia de idempotência/compensação que o outbox dá
+(a mesma razão pela qual `cashback-outbox-jpa` também não tem API de escrita). Se um dia for
+preciso reservar estoque fora da saga (ex.: um ajuste manual de operação), isso deve ser um
+comando novo publicado no tópico do orquestrador, não um endpoint REST.
+
+CORS liberado para `/estoque/**` (`CorsConfig`, mesmo padrão do `logistica-rota-service`),
+configurável por `app.cors.allowed-origins`/`APP_CORS_ALLOWED_ORIGINS`.
+
+### `loja-inventory-web`
+
+Front-end React (uma tela: listar estoque + buscar por SKU), consumindo só `GET /estoque`
+e `GET /estoque/{sku}` acima -- sem nenhuma tela de reserva/liberação, de propósito. Testes
+com Jasmine, mesma combinação (jsdom + Testing Library) do `logistica-rota-web`. Mesma
+limitação de ambiente do módulo irmão: `npm install` não foi possível aqui (registro do npm
+e CDNs bloqueados neste sandbox) -- a lógica sem React (`src/api/estoqueApi.js`) foi
+verificada com Node puro, mas rode `npm install && npm test` numa máquina normal antes de
+considerar isto pronto (ver `loja-inventory-web/README.md`).
+
 ## O que ainda não está implementado (próximos passos)
 
 Seguindo a mesma lógica de isolamento do `nfe-generator` (SEFAZ isolada num serviço

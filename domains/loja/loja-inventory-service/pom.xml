@@ -27,8 +27,13 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
         <dependency>
+            <!-- Adicionado para expor GET /estoque (consulta somente-leitura para o
+                 front-end React) -- spring-boot-starter-json sozinho não sobe servlet
+                 container nenhum. A reserva/liberação de estoque continua só por Kafka
+                 (InventoryCommandListener); não expusemos POST de reserva aqui de propósito,
+                 ver README. -->
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-json</artifactId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.kafka</groupId>

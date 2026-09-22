@@ -58,3 +58,8 @@ app:
   outbox:
     publish-fixed-delay-ms: 5000
     batch-size: 50
+  cors:
+    # Mesmo padrão do logistica-rota-service: "*" só para o primeiro teste de aceitação do
+    # front-end (domains/loja/loja-inventory-web) -- troque pelo domínio real antes de
+    # produção (sobrescrevível por APP_CORS_ALLOWED_ORIGINS, sem redeploy).
+    allowed-origins: "*"

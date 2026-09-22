@@ -102,6 +102,18 @@ componentes marcados):
 - Entrada inválida (carga acima da capacidade, distância ≤ 0, coordenada fora de faixa,
   etc.) responde `400` com `{ "mensagem": "..." }` em vez de vazar erro 500.
 
+### `logistica-rota-web`
+
+Front-end React com três telas (Simular rota, Calcular frete, Histórico de entregas),
+consumindo `logistica-rota-service` (8085) e `logistica-importacao-service` (8086) sem
+nenhum endpoint novo. Testes com Jasmine (não Jest -- pedido explícito de negócio; ver o
+README do próprio módulo para a combinação Jasmine + jsdom + Testing Library usada). **O
+ambiente onde este front-end foi escrito não tinha acesso ao npm nem a CDNs**, então a
+lógica sem React (`src/api/logisticaApi.js`) foi verificada com Node puro, mas os testes
+Jasmine em si e os componentes `.jsx` nunca rodaram de verdade -- ver
+`logistica-rota-web/README.md`, seção "Limitações do ambiente", antes de assumir que a
+suíte passa sem rodar `npm install && npm test` numa máquina normal.
+
 ## Testes
 
 - **Unitários** (`src/test/.../domain`): cobrem `Coordenada`, `GeoUtils`, `TipoCaminhao`
@@ -116,7 +128,12 @@ componentes marcados):
   aceitação (A: carreta 4 eixos carregada, B: carreta 30 t vazia, C: rodotrem carregado)
   já usados na página web de frete e no protótipo Android -- os três lados (Kotlin, HTML/JS
   e este serviço Java) precisam concordar; se mudar uma fórmula aqui, mude nos outros dois
-  também.
+  também. `CenarioBelemRioTest` é o caso de negócio pedido para o case de apresentação:
+  Rodotrem saindo de Belém (PA) para o Rio de Janeiro (RJ) e voltando cheio de asfalto, com
+  os dois limites de custo para a chance de 50% de conseguir carga na ida (100% vazia vs.
+  100% carregada) em vez de uma fração de trajeto inventada -- ver a Javadoc da classe para
+  as premissas de distância/diesel/pedágio que **não** vieram do pedido e precisam ser
+  confirmadas antes de qualquer apresentação real.
 - **Integração** (`src/test/.../api/RotaControllerIntegrationTest`, `@Tag("integration")`):
   sobe o contexto Spring inteiro num servidor HTTP real (porta aleatória) e chama os dois
   endpoints via `TestRestTemplate`, ponta a ponta, sem mocks -- no mesmo espírito das
@@ -148,9 +165,13 @@ curl -s localhost:8085/fretes/calcular -H 'Content-Type: application/json' -d '{
 > está bloqueado pela política de rede desta sessão (proxy retornou 403), então `mvn test`
 > não pôde ser executado aqui. A lógica de domínio (tabela de consumo, haversine, TSP,
 > cálculo de frete com os três casos de aceitação, e a montagem/interpretação de
-> requisição-resposta da OpenRouteService) foi conferida à parte com `javac`/`java` puro --
-> a parte da ORS pôde ser testada contra o Jackson de verdade (jars já presentes nesta
-> máquina via Gradle), não só simulada; todos os valores bateram. A camada Spring
+> requisição-resposta da OpenRouteService, e o cenário Belém-RJ de `CenarioBelemRioTest`)
+> foi conferida à parte com `javac`/`java` puro -- a parte da ORS pôde ser testada contra o
+> Jackson de verdade (jars já presentes nesta máquina via Gradle), não só simulada; todos os
+> valores bateram, JUnit incluído para o cenário Belém-RJ (não havia `junit-jupiter-api.jar`
+> em cache, só `junit-platform-*`, então os valores dos `assertEquals` foram conferidos
+> chamando a mesma sequência de `CalculadoraFrete`/`ParametrosFrete` fora do JUnit, não
+> dentro dele). A camada Spring
 > (controller, `@Component`, a chamada HTTP em si de `OpenRouteServiceProvedorDistancias`,
 > testes de integração) não foi compilada nem executada. Rode `mvn test` no seu ambiente, e
 > faça pelo menos uma chamada real com `distancia-provider=openrouteservice` contra uma
